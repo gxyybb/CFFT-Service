@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cfft.mapper.TipsMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.cfft.beans.Tips">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="categoryListId" column="category_list_id" jdbcType="INTEGER"/>
+            <result property="tips" column="tips" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,category_list_id,tips
+    </sql>
+    <select id="selectRandomTips" resultType="com.example.cfft.beans.Tips"> <!-- 替换成你的实体类路径 -->
+        SELECT *
+        FROM tips
+        WHERE category_list_id = #{categoryListId}
+        ORDER BY RAND()
+        LIMIT 1
+    </select>
+</mapper>

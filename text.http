@@ -1,0 +1,24 @@
+###
+
+# curl -X POST -H "Content-Type: application/json" -d '{
+#  "categoryId": 0,
+#  "categoryName": "text",
+#  "categoryLevel": 0,
+#  "categoryParent": "-1",
+#  "categoryRoot": 0,
+#  "categoryDesc": "这是一个测试用例"
+#}' http://182.92.65.28:8080/category
+POST http://182.92.65.28:8080/category
+Content-Type: application/json
+
+{
+  "categoryId": 0,
+  "categoryName": "text",
+  "categoryLevel": 0,
+  "categoryParent": "-1",
+  "categoryRoot": 0,
+  "categoryDesc": "这是一个测试用例"
+}
+
+###
+

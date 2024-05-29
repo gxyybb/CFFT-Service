@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.cfft.mapper.CategoryMapper">
+    <select id="getCategorysByCategoryId" resultType="string">
+        WITH RECURSIVE category_path AS (
+            SELECT category_id, category_name, category_parent
+            FROM category
+            WHERE category_id = #{categoryId}-- 传入的 category_id 参数
+            UNION ALL
+            SELECT c.category_id, c.category_name, c.category_parent
+            FROM category c
+                     JOIN category_path cp ON c.category_name = cp.category_parent -- 连接条件更正为 category_id 和 category_parent
+        )
+        SELECT GROUP_CONCAT(category_name ORDER BY category_id SEPARATOR '>') AS category_path
+        FROM category_path;
+
+
+    </select>
+</mapper>
