@@ -3,9 +3,7 @@ package com.example.cfft.api.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.cfft.beans.Category;
-import com.example.cfft.beans.Mushroom;
-import com.example.cfft.beans.MushroomImg;
+import com.example.cfft.beans.*;
 import com.example.cfft.beans.vo.MushroomDTO;
 import com.example.cfft.beans.vo.MushroomVO;
 import com.example.cfft.common.utils.FileUtil;
@@ -14,15 +12,14 @@ import com.example.cfft.common.utils.PathUtil;
 import com.example.cfft.common.utils.Static;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.mapper.CategoryMapper;
-import com.example.cfft.service.CategoryService;
-import com.example.cfft.service.MushroomImgService;
+import com.example.cfft.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import com.example.cfft.service.MushroomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +41,10 @@ public class MushroomController {
     private MushroomImgService imgService;
     @Autowired
     private CategoryMapper categoryMapper;
+    @Autowired
+    private LocationMushroomService locationMushroomService;
+    @Autowired
+    private LocationService locationService;
 
 
     /**
@@ -115,7 +116,6 @@ public class MushroomController {
         PageHelper<MushroomDTO> pageResultVO = new PageHelper<>(mushroomDTOList,size,page);
         return ResultVO.success(pageResultVO.getPageData());
     }
-
 
 
 
@@ -393,6 +393,7 @@ public class MushroomController {
     @CrossOrigin(origins = "*")
     @PutMapping("/{id}")
     public ResultVO updateMushroom(@PathVariable Integer id, @RequestBody Mushroom updatedMushroom) {
+
         updatedMushroom.setMushroomId(id);
         boolean success = mushroomService.updateById(updatedMushroom);
         if (success) {
@@ -400,6 +401,7 @@ public class MushroomController {
         } else {
             return ResultVO.failure("更新失败");
         }
+
     }
 
 
@@ -463,7 +465,11 @@ public class MushroomController {
             img.setImgUrl(PathUtil.convertToHttpUrl(Static.DefaultImage));
             list.add(img);
         }
-
+        QueryWrapper<LocationMushroom> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("mushroom_id",mushroom.getMushroomId());
+        List<LocationMushroom> list1 = locationMushroomService.list(queryWrapper);
+        List<Location> collect = list1.stream().map(locationMushroom -> locationService.getById(locationMushroom.getLocationId())).toList();
+        mushroomDTO.setLocations(collect);
         mushroomDTO.setMushroomImages(list);
         Category byId = categoryService.getById(mushroom.getCategoryId());
         String categorysByCategoryId = categoryMapper.getCategorysByCategoryId(byId.getCategoryId());
@@ -483,7 +489,11 @@ public class MushroomController {
         MushroomVO mushroomVO = new MushroomVO();
         mushroomVO.setMushroomId(room.getMushroomId());
         mushroomVO.setMushroomName(room.getMushroomName());
-
+        QueryWrapper<LocationMushroom> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("mushroom_id",room.getMushroomId());
+        List<LocationMushroom> list1 = locationMushroomService.list(queryWrapper);
+        List<Location> collect = list1.stream().map(locationMushroom -> locationService.getById(locationMushroom.getLocationId())).toList();
+        mushroomVO.setLocations(collect);
         // Adding null check for category.getCategoryName()
         if (category.getCategoryName() != null) {
             mushroomVO.setCategory(category.getCategoryName());

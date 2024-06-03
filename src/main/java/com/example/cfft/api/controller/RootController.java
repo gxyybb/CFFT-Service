@@ -23,8 +23,10 @@ public class RootController {
     public UserController userController;
 
 
+
+    @CrossOrigin("*")
     @GetMapping("all")
-    public ResultVO getAllUser() {
+    public ResultVO getAllUser(@RequestParam("token")String token) {
         List<User> list = userService.list();
         List<User> updatedList = list.stream().map(user -> {
             // Convert image paths to HTTP URLs

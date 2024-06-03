@@ -1,7 +1,11 @@
 package com.example.cfft.beans.vo;
 
+import com.example.cfft.beans.Location;
+import com.example.cfft.beans.LocationMushroom;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class MushroomVO{
@@ -51,4 +55,5 @@ public class MushroomVO{
      */
     @ApiModelProperty(value = "3d模型")
     private String mushroom3d;
+    private List<Location> locations;
 }

@@ -14,6 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/location/**")
                 .addPathPatterns("/root/**");  // 只拦截 /root/** 路径的请求
     }
 }
