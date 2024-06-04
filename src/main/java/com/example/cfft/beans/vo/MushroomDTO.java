@@ -1,6 +1,7 @@
 package com.example.cfft.beans.vo;
 
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.example.cfft.beans.Location;
 import com.example.cfft.beans.MushroomImg;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -13,7 +14,6 @@ public class MushroomDTO {
      * ID
      */
 
-    @TableId("mushroom_id")
     @ApiModelProperty(value = "ID")
     private Integer mushroomId;
 
@@ -58,4 +58,7 @@ public class MushroomDTO {
      */
     @ApiModelProperty(value = "是否有毒(不含毒0，有毒1，未知2)")
     private Integer isPoison;
+
+    private List<Location> locations;
+
 }

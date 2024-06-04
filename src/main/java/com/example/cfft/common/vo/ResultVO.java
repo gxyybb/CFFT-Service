@@ -72,4 +72,7 @@ public class ResultVO{
         return error();
     }
 
+    public boolean isSuccess() {
+        return this.code==200;
+    }
 }
