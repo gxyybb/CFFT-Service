@@ -80,8 +80,7 @@ public class CommentController {
             Comment byId = commentService.getById(commentId);
             byId.setReplyCount(byId.getReplyCount() + 1);
             commentService.updateById(byId);
-        }
-        return getResultVOByType(typeId, type);
+        }return getResultVOByType(typeId, type);
     }
 
     @Operation(summary = "点赞评论", description = "根据传入的token和评论ID对评论进行点赞或取消点赞")
