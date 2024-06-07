@@ -1,6 +1,7 @@
 package com.example.cfft.beans;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -41,7 +42,8 @@ public class Comment implements Serializable{
      * 帖子ID
      */
     @ApiModelProperty(value = "帖子ID")
-    private Integer postId;
+    @TableField("post_id")
+    private Integer typeId;
 
     /**
      * 父评论ID
@@ -60,4 +62,5 @@ public class Comment implements Serializable{
      */
     @ApiModelProperty(value = "回复数")
     private Integer replyCount;
+    private String type;
 }

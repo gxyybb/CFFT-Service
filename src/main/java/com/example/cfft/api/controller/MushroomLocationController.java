@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,10 @@ public class MushroomLocationController {
 
     @PostMapping("/savemore")
     @CrossOrigin("*")
-    public ResultVO saveMore(@RequestParam("mushroomId") Integer mushroomId, @RequestParam("location") List<Integer> list) {
+    public ResultVO saveMore(@RequestBody Map<String, Object> request) {
+        Integer mushroomId = (Integer) request.get("mushroomId");
+        List<Integer> list = (List<Integer>) request.get("location");
+
         int total = list.size();
         List<Integer> failedLocations = list.stream()
                 .filter(locationId -> !saveInfo(mushroomId, locationId).isSuccess())

@@ -1,9 +1,10 @@
 package com.example.cfft.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.cfft.beans.Comment;
 import com.example.cfft.beans.User;
 import com.example.cfft.beans.Video;
-import com.example.cfft.beans.VideoComments;
+
 import com.example.cfft.beans.vo.CommentVO;
 import com.example.cfft.beans.vo.VideoDTO;
 import com.example.cfft.beans.vo.VideoFirst;
@@ -12,8 +13,9 @@ import com.example.cfft.common.utils.PathUtil;
 import com.example.cfft.common.utils.Static;
 import com.example.cfft.common.utils.TokenUtil;
 import com.example.cfft.common.vo.ResultVO;
+import com.example.cfft.service.CommentService;
 import com.example.cfft.service.UserService;
-import com.example.cfft.service.VideoCommentsService;
+
 import com.example.cfft.service.VideoService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +35,10 @@ public class VideosController {
     private VideoService videosService;
 
     @Autowired
-    private VideoCommentsService videoCommentsService;
+    private CommentController commentController;
 
+    @Autowired
+    private CommentService commentService;
     @Autowired
     private UserService userService;
 
@@ -185,9 +189,10 @@ public class VideosController {
         videosService.removeById(id);
 
         // 删除与视频相关的评论
-        QueryWrapper<VideoComments> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("video_id", id);
-        videoCommentsService.remove(queryWrapper);
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("post_id",id)
+                .eq("type","video");
+        commentService.remove(queryWrapper);
 
         return ResultVO.success();
     }
@@ -204,13 +209,7 @@ public class VideosController {
     @PostMapping("/comment")
     @CrossOrigin("*")
     public ResultVO saveComment(@RequestParam("token") String token, @RequestParam("content") String content, @RequestParam("videoId") Integer videoId) {
-        VideoComments videoComments = new VideoComments();
-        videoComments.setVideoId(videoId);
-        videoComments.setUserId(TokenUtil.getUserIdFromToken(token));
-        videoComments.setCommentText(content);
-        videoComments.setCommentTime(new Date());
-        videoCommentsService.save(videoComments);
-        return ResultVO.success();
+       return commentController.addComment(content,token,videoId,"video");
     }
 
     /**
@@ -221,7 +220,10 @@ public class VideosController {
     @DeleteMapping("/comment")
     @CrossOrigin("*")
     public ResultVO deleteComment(@RequestParam("videoId") Integer videoId) {
-        videoCommentsService.removeById(videoId);
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("post_id",videoId)
+                .eq("type","video");
+        commentService.remove(queryWrapper);
         return ResultVO.success();
     }
 
@@ -246,36 +248,11 @@ public class VideosController {
      * @return 评论列表
      */
     private List<CommentVO> generateCommentVO(Integer videoId) {
-        QueryWrapper<VideoComments> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("video_id", videoId);
-        List<VideoComments> list = videoCommentsService.list(queryWrapper);
-        List<CommentVO> list1 = covertUser(list);
-        return list1;
+        return (List<CommentVO>) commentController.getComments(videoId,"video").getData();
+
     }
 
-    /**
-     * 将视频评论列表转换为CommentVO列表
-     * @param list 视频评论列表
-     * @return CommentVO列表
-     */
-    private List<CommentVO> covertUser(List<VideoComments> list) {
-        List<CommentVO> commentVOS = new ArrayList<>();
-        for (VideoComments comments : list) {
-            Integer userId = comments.getUserId();
-            User byId = userService.getById(userId);
-            CommentVO commentVO = new CommentVO();
-            commentVO.setCommentId(comments.getCommentId());
-            commentVO.setContent(comments.getCommentText());
-            commentVO.setUserImage(PathUtil.convertToHttpUrl(byId.getUserImage()));
-            commentVO.setPublishTime(comments.getCommentTime());
-            commentVO.setUsername(byId.getUsername());
-            commentVO.setPostId(comments.getVideoId());
-            commentVO.setLikeCount(comments.getLikeCount());
-            commentVO.setReplyCount(comments.getReplyCount());
-            commentVOS.add(commentVO);
-        }
-        return commentVOS;
-    }
+
 
     /**
      * 将Video对象列表转换为VideoFirst对象列表

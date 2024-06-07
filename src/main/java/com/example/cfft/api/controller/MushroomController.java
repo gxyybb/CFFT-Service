@@ -6,20 +6,22 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.cfft.beans.*;
 import com.example.cfft.beans.vo.MushroomDTO;
 import com.example.cfft.beans.vo.MushroomVO;
-import com.example.cfft.common.utils.FileUtil;
-import com.example.cfft.common.utils.PageHelper;
-import com.example.cfft.common.utils.PathUtil;
-import com.example.cfft.common.utils.Static;
+import com.example.cfft.common.utils.*;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.mapper.CategoryMapper;
 import com.example.cfft.service.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.net.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +47,6 @@ public class MushroomController {
     private LocationMushroomService locationMushroomService;
     @Autowired
     private LocationService locationService;
-
 
     /**
      * （安卓）根据关键字查询蘑菇列表
@@ -280,6 +281,7 @@ public class MushroomController {
             return ResultVO.failure("删除失败，请刷新页面");
         }
     }
+
 
 
 

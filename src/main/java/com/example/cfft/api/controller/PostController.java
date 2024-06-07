@@ -235,7 +235,8 @@ public class PostController{
 
         QueryWrapper<Comment> queryWrapper1 = new QueryWrapper<>();
         postImgService.remove(queryWrapper);
-        queryWrapper1.eq("post_id",postId);
+        queryWrapper1.eq("post_id",postId)
+                .eq("type","post");
         commentService.remove(queryWrapper1);
         if (byId.getImg()!=null){
             FileUtil.deleteFile(byId.getImg());

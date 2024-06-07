@@ -1,12 +1,11 @@
 package com.example.cfft.api.controller;
 
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,8 +29,14 @@ import com.example.cfft.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -67,6 +72,39 @@ public class UserController {
 
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private static final String CREATE_PLAYER_URL = "http://localhost:8082/player/create";
+
+    @CrossOrigin("*")
+    @PostMapping("/createPlayer")
+    public ResultVO createUser(@RequestParam("token") String token) {
+        try {
+            // 从token中获取userId
+            Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
+            return Optional.ofNullable(userService.getById(userIdFromToken))
+                    .map(user -> {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.set("Content-Type", "application/json");
+
+                        HttpEntity<User> request = new HttpEntity<>(user, headers);
+
+                        ResponseEntity<ResultVO> response = restTemplate.postForEntity(
+                                CREATE_PLAYER_URL,
+                                request,
+                                ResultVO.class
+                        );
+
+                        // 返回创建Player的结果
+                        return response.getBody();
+                    })
+                    .orElseGet(() -> ResultVO.error("用户不存在"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResultVO.error("创建Player失败：" + e.getMessage());
+        }
+    }
 
     /**
      * 管理员登录

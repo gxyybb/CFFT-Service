@@ -1,7 +1,5 @@
 package com.example.cfft.api.controller;
 
-import com.alipay.api.AlipayApiException;
-import com.alipay.api.internal.util.AlipaySignature;
 import com.example.cfft.api.config.AlipayConfig;
 import com.example.cfft.service.AlipayService;
 import jakarta.servlet.http.HttpServletRequest;

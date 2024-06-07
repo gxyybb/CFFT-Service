@@ -67,7 +67,7 @@ public class ChatController {
         }
     }
 
-    @GetMapping("/file")
+    @PostMapping("/file")
     @CrossOrigin(origins = "*")
     public ResultVO chatByFile(@RequestParam("file") MultipartFile file, @RequestParam("token") String token, @RequestParam(value = "use4", required = false, defaultValue = "false") boolean use4) {
         Map<String, String> map = new HashMap<>();

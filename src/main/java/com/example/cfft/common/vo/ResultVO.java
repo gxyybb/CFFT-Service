@@ -1,10 +1,12 @@
 package com.example.cfft.common.vo;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 //相应给前端的状态码和信息返回值均为json类型
 
 @Getter
+@NoArgsConstructor
 public class ResultVO{
 /*code:200表示成功响应500表示响应失败（不管是成功还是失败，有需要的话都有msg和date）
 * msg是响应的字符串
@@ -15,7 +17,7 @@ public class ResultVO{
     private Object data;
 
 
-    private ResultVO(int code, String msg, Object data) {
+    public ResultVO(int code, String msg, Object data) {
         this.code = code;
         this.msg = msg;
         this.data = data;
