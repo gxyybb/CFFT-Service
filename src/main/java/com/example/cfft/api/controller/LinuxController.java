@@ -5,14 +5,15 @@ import com.example.cfft.common.utils.CheckPath;
 import com.example.cfft.common.utils.PathUtil;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.service.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "路径转换", description = "处理Windows和Linux路径转换")
 @RestController
 @RequestMapping("gxy")
 public class LinuxController {
@@ -40,9 +41,11 @@ public class LinuxController {
         this.userService = userService;
     }
 
+    @Operation(summary = "转换路径到Linux格式", description = "将系统中的所有路径转换为Linux格式")
     @PostMapping("/toLinux")
     @CrossOrigin(origins = "*")
-    public ResultVO toLinux(String key) {
+    public ResultVO toLinux(
+            @Parameter(description = "验证密钥", required = true) @RequestParam("key") String key) {
         if (!"郭炫烨最帅666".equals(key)) {
             return ResultVO.error("你真是个出生");
         }
@@ -56,9 +59,12 @@ public class LinuxController {
         }
     }
 
+    // 转换路径到Windows格式
+    @Operation(summary = "转换路径到Windows格式", description = "将系统中的所有路径转换为Windows格式")
     @PostMapping("/toWindows")
     @CrossOrigin(origins = "*")
-    public ResultVO toWindows(String key) {
+    public ResultVO toWindows(
+            @Parameter(description = "验证密钥", required = true) @RequestParam("key") String key) {
         if (!"郭炫烨最帅666".equals(key)) {
             return ResultVO.error("你真是个出生");
         }
@@ -71,7 +77,6 @@ public class LinuxController {
             return ResultVO.error("更新路径时发生错误: " + e.getMessage());
         }
     }
-
     private void updatePathsToLinux() {
         updateCarouselPathsToLinux();
         updateCategoryPathsToLinux();

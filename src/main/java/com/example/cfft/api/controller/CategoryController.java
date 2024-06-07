@@ -6,6 +6,9 @@ import com.example.cfft.common.utils.FileUtil;
 import com.example.cfft.common.utils.PathUtil;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
  * 分类控制器
  */
 @RestController
+@Tag(name = "分类管理", description = "处理分类相关操作")
 @RequestMapping("/category")
 public class CategoryController {
 
@@ -29,17 +33,22 @@ public class CategoryController {
     /**
      * 保存类别图片
      */
+    @Operation(summary = "保存类别图片", description = "根据分类ID保存类别图片")
     @CrossOrigin(origins = "*")
     @PostMapping("/saveImage")
-    public ResultVO saveImage(@RequestParam("categoryId") Integer categoryId, @RequestParam("imageFile") MultipartFile imageFile){
+    public ResultVO saveImage(
+            @Parameter(description = "分类ID", required = true) @RequestParam("categoryId") Integer categoryId,
+            @Parameter(description = "图片文件", required = true) @RequestParam("imageFile") MultipartFile imageFile) {
         return categoryService.saveImage(categoryId,imageFile);
     }
     /**
      * 创建分类
      */
+    @Operation(summary = "创建分类", description = "创建一个新的分类")
     @CrossOrigin(origins = "*")
     @PostMapping
-    public ResultVO createCategory(@RequestBody Category category) {
+    public ResultVO createCategory(
+            @Parameter(description = "分类信息", required = true) @RequestBody Category category) {
         // 使用 AtomicBoolean 来记录保存操作是否成功
         AtomicBoolean saveSuccess = new AtomicBoolean(false);
 
@@ -52,9 +61,11 @@ public class CategoryController {
         return saveSuccess.get() ? ResultVO.success() : ResultVO.error();
     }
 
+    @Operation(summary = "批量保存分类", description = "批量保存多个分类")
     @CrossOrigin(origins = "*")
     @PostMapping("/saveList")
-    public ResultVO saveCategoryList(@RequestBody List<Category> categoryList) {
+    public ResultVO saveCategoryList(
+            @Parameter(description = "分类列表", required = true) @RequestBody List<Category> categoryList) {
         // 使用并发集合来确保线程安全
         Set<Category> distinctCategories = new HashSet<>(categoryList);
 
@@ -85,10 +96,12 @@ public class CategoryController {
 
 
 
+    @Operation(summary = "删除类别图片", description = "根据分类ID删除类别图片")
     @DeleteMapping("/image")
     @CrossOrigin(origins = "*")
     @Transactional
-    public ResultVO removeImage(@RequestParam("id") Integer categoryId) {
+    public ResultVO removeImage(
+            @Parameter(description = "分类ID", required = true) @RequestParam("id") Integer categoryId) {
         return Optional.ofNullable(categoryService.getById(categoryId))
                 .map(category -> {
                     Optional.ofNullable(category.getCategoryImg())
@@ -103,8 +116,9 @@ public class CategoryController {
     /**
      * 获取所有分类
      */
+    @Operation(summary = "获取所有分类", description = "获取所有分类的列表")
     @CrossOrigin(origins = "*")
-    @GetMapping()
+    @GetMapping
     public ResultVO removeImage() {
         // 获取所有类别列表
         List<Category> categoryList = categoryService.list();
@@ -124,9 +138,11 @@ public class CategoryController {
     /**
      * 根据分类级别获取分类列表
      */
+    @Operation(summary = "根据分类级别获取分类列表", description = "根据分类级别获取分类列表")
     @CrossOrigin(origins = "*")
     @GetMapping("/{level}")
-    public ResultVO getCategoryByLevel(@PathVariable("level") Integer level) {
+    public ResultVO getCategoryByLevel(
+            @Parameter(description = "分类级别", required = true) @PathVariable("level") Integer level) {
         QueryWrapper<Category> query = new QueryWrapper<>();
         query.eq("category_level", level);
 
@@ -142,9 +158,11 @@ public class CategoryController {
     /**
      * 根据分类名称获取子分类列表
      */
+    @Operation(summary = "根据分类名称获取子分类列表", description = "根据分类名称获取子分类列表")
     @CrossOrigin(origins = "*")
     @GetMapping("/getChildCategoryByName")
-    public ResultVO getChildCategoryByName(@RequestParam("categoryName") String categoryName) {
+    public ResultVO getChildCategoryByName(
+            @Parameter(description = "分类名称", required = true) @RequestParam("categoryName") String categoryName) {
         QueryWrapper<Category> query = new QueryWrapper<>();
         query.eq("category_parent", categoryName);
         List<Category> list = categoryService.list(query);
@@ -160,9 +178,11 @@ public class CategoryController {
         return ResultVO.success(updatedList);
     }
 
+    @Operation(summary = "搜索分类", description = "根据关键字搜索分类")
     @CrossOrigin(origins = "*")
     @GetMapping("/search/{keyword}")
-    public ResultVO searchCategory(@PathVariable("keyword") String keyword) {
+    public ResultVO searchCategory(
+            @Parameter(description = "关键字", required = true) @PathVariable("keyword") String keyword) {
         // 初步模糊查询
         QueryWrapper<Category> query = new QueryWrapper<>();
         query.like("category_name", keyword);
@@ -222,9 +242,11 @@ public class CategoryController {
     /**
      * 根据分类ID获取子分类列表
      */
+    @Operation(summary = "根据分类ID获取子分类列表", description = "根据分类ID获取子分类列表")
     @CrossOrigin(origins = "*")
     @GetMapping("/getChildCategoryById")
-    public ResultVO searchCategory(@RequestParam("categoryId") Integer categoryId) {
+    public ResultVO searchCategory(
+            @Parameter(description = "分类ID", required = true) @RequestParam("categoryId") Integer categoryId) {
         // 获取父分类
         Optional<Category> categoryOptional = Optional.ofNullable(categoryService.getById(categoryId));
 
@@ -242,9 +264,11 @@ public class CategoryController {
     /**
      * 根据分类名称获取父分类
      */
+    @Operation(summary = "根据分类名称获取父分类", description = "根据分类名称获取父分类")
     @CrossOrigin(origins = "*")
     @GetMapping("/getParentCategory")
-    public ResultVO getParentCategory(@RequestParam("categoryName") String categoryName) {
+    public ResultVO getParentCategory(
+            @Parameter(description = "分类名称", required = true) @RequestParam("categoryName") String categoryName) {
         QueryWrapper<Category> query = new QueryWrapper<>();
         query.eq("category_name", categoryName);
         Category one = categoryService.getOne(query);
@@ -255,10 +279,12 @@ public class CategoryController {
     /**
      * 删除分类
      */
+    @Operation(summary = "删除分类", description = "根据分类ID删除分类")
     @CrossOrigin(origins = "*")
     @DeleteMapping
     @Transactional
-    public ResultVO deleteCategory(@RequestParam("categoryId") Integer categoryId) {
+    public ResultVO deleteCategory(
+            @Parameter(description = "分类ID", required = true) @RequestParam("categoryId") Integer categoryId) {
         AtomicBoolean remove = new AtomicBoolean(false);
         Optional.ofNullable(categoryService.getById(categoryId)).ifPresent(
             category -> {
@@ -272,9 +298,11 @@ public class CategoryController {
 
         return remove.get() ? ResultVO.success() : ResultVO.error();
     }
+    @Operation(summary = "根据分类ID获取分类", description = "根据分类ID获取分类信息")
     @CrossOrigin(origins = "*")
     @GetMapping("/getCategoryById")
-    public ResultVO getCategoryById(@RequestParam("categoryId") Integer categoryId) {
+    public ResultVO getCategoryById(
+            @Parameter(description = "分类ID", required = true) @RequestParam("categoryId") Integer categoryId) {
         return Optional.ofNullable(categoryService.getById(categoryId))
                 .map(ResultVO::success)
                 .orElseGet(() -> ResultVO.error("未找到对应的类别"));
@@ -282,9 +310,11 @@ public class CategoryController {
     /**
      * 更新分类
      */
+    @Operation(summary = "更新分类", description = "更新分类信息")
     @CrossOrigin(origins = "*")
     @PutMapping
-    public ResultVO updateCategory(@RequestBody Category category) {
+    public ResultVO updateCategory(
+            @Parameter(description = "分类信息", required = true) @RequestBody Category category) {
         boolean b = categoryService.updateById(category);
         return b ? ResultVO.success() : ResultVO.error();
     }

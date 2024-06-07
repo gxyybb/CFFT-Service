@@ -1,34 +1,20 @@
 package com.example.cfft.api.controller;
 
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Instant;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.example.cfft.beans.*;
 import com.example.cfft.beans.vo.*;
-import com.example.cfft.common.utils.FileUtil;
-import com.example.cfft.common.utils.PathUtil;
-import com.example.cfft.common.utils.Static;
-import com.example.cfft.common.utils.TokenUtil;
+import com.example.cfft.common.utils.*;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.mapper.CommentMapper;
 import com.example.cfft.mapper.LikeMapper;
 import com.example.cfft.mapper.PostMapper;
 import com.example.cfft.service.*;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -41,35 +27,36 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.example.cfft.common.utils.Static.BASE_URL_FOR_USER;
 
 @RestController
 @RequestMapping("/user")
+@Tag(name = "UserController", description = "用户管理接口")
 public class UserController {
 
     @Autowired
     private UserService userService;
-
     @Autowired
     private TextService textService;
-
     @Autowired
     private LikeService likeService;
     @Autowired
     private LikeMapper likeMapper;
-
     @Autowired
     private PostMapper postMapper;
-
     @Autowired
     private PostService postService;
-
     @Autowired
     private CommentMapper commentMapper;
-
     @Autowired
     private PostController postController;
-
     @Autowired
     private CommentService commentService;
     @Autowired
@@ -77,11 +64,11 @@ public class UserController {
 
     private static final String CREATE_PLAYER_URL = "http://localhost:8082/player/create";
 
+    @Operation(summary = "创建用户Player", description = "根据token创建用户Player")
     @CrossOrigin("*")
     @PostMapping("/createPlayer")
-    public ResultVO createUser(@RequestParam("token") String token) {
+    public ResultVO createUser(@Parameter(description = "用户token") @RequestParam("token") String token) {
         try {
-            // 从token中获取userId
             Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
             return Optional.ofNullable(userService.getById(userIdFromToken))
                     .map(user -> {
@@ -96,7 +83,6 @@ public class UserController {
                                 ResultVO.class
                         );
 
-                        // 返回创建Player的结果
                         return response.getBody();
                     })
                     .orElseGet(() -> ResultVO.error("用户不存在"));
@@ -106,14 +92,11 @@ public class UserController {
         }
     }
 
-    /**
-     * 管理员登录
-     */
-
+    @Operation(summary = "管理员登录", description = "管理员账户登录")
     @CrossOrigin(origins = "*")
     @PostMapping("/loginMaster")
-    public ResultVO loginMaster(@RequestParam("username") String username,
-                                @RequestParam("password") String password) {
+    public ResultVO loginMaster(@Parameter(description = "用户名") @RequestParam("username") String username,
+                                @Parameter(description = "密码") @RequestParam("password") String password) {
         if (username.equals("admin") && password.equals("admin")) {
             return ResultVO.success(TokenUtil.generateToken(String.valueOf(123456789)));
         } else {
@@ -121,75 +104,59 @@ public class UserController {
         }
     }
 
-    /**
-     * 用户登录
-     * @param username 用户名
-     * @param password 密码
-     * @return ResultVO
-     */
+    @Operation(summary = "用户登录", description = "用户登录接口")
     @CrossOrigin(origins = "*")
     @PostMapping("/login")
-    public ResultVO login(@RequestParam("username") String username,
-                          @RequestParam("password") String password) {
+    public ResultVO login(@Parameter(description = "用户名") @RequestParam("username") String username,
+                          @Parameter(description = "密码") @RequestParam("password") String password) {
         return userService.login(username, password);
     }
 
-    /**
-     * 更新用户头像
-     * @param img 用户上传的头像图片
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "更新用户头像", description = "更新用户头像图片")
     @CrossOrigin(origins = "*")
     @PutMapping("/updateImg")
-    public ResultVO updateImg(@RequestParam("img") MultipartFile img,
-                              @RequestParam("token") String token) {
+    public ResultVO updateImg(@Parameter(description = "用户头像图片") @RequestParam("img") MultipartFile img,
+                              @Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userId = TokenUtil.getUserIdFromToken(token);
         User byId = userService.getById(userId);
 
         if (byId.getUserImage() != null) {
             FileUtil.deleteFile(byId.getUserImage());
         }
-        String s = FileUtil.saveFile(byId.getAvatar(), img);
+        String s = FileUtil.saveFile(BASE_URL_FOR_USER + byId.getUserId(), img);
         byId.setUserImage(s);
         userService.updateById(byId);
         return ResultVO.success("头像上传成功");
     }
+
+    @Operation(summary = "更新用户背景图片", description = "更新用户背景图片")
     @CrossOrigin(origins = "*")
     @PutMapping("/updateBackImg")
-    public ResultVO updateBackImg(@RequestParam("img") MultipartFile img,
-                              @RequestParam("token") String token) {
+    public ResultVO updateBackImg(@Parameter(description = "背景图片") @RequestParam("img") MultipartFile img,
+                                  @Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userId = TokenUtil.getUserIdFromToken(token);
         User byId = userService.getById(userId);
 
-        if (byId.getUserImage() != null) {
-            FileUtil.deleteFile(byId.getUserImage());
+        if (byId.getBackImg() != null) {
+            FileUtil.deleteFile(byId.getBackImg());
         }
-        String s = FileUtil.saveFile(byId.getAvatar(), img);
+        String s = FileUtil.saveFile(BASE_URL_FOR_USER + byId.getUserId(), img);
         byId.setBackImg(s);
         userService.updateById(byId);
         return ResultVO.success("背景上传成功");
     }
 
-    /**
-     * 更新用户信息
-     * @param token 用户的身份令牌
-     * @param column 要更新的用户信息列
-     * @param info 更新的信息
-     * @return ResultVO
-     */
+    @Operation(summary = "更新用户信息", description = "更新指定列的用户信息")
     @CrossOrigin(origins = "*")
     @PutMapping("/updateInfo")
-    public ResultVO updateInformation(@RequestParam("token") String token,
-                                      @RequestParam("column") UserInfo column,
-                                      @RequestParam("info") String info) {
+    public ResultVO updateInformation(@Parameter(description = "用户token") @RequestParam("token") String token,
+                                      @Parameter(description = "要更新的列名") @RequestParam("column") UserInfo column,
+                                      @Parameter(description = "更新的信息") @RequestParam("info") String info) {
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
 
-        // 构建更新条件
         UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("user_id", userIdFromToken);
 
-        // 设置更新的列和值
         switch (column) {
             case username:
                 updateWrapper.set("username", info);
@@ -201,7 +168,6 @@ public class UserController {
                 updateWrapper.set("gender", info);
                 break;
             case birthdate:
-                // 假设日期格式为 "yyyy-MM-dd"
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                 try {
                     Date date = dateFormat.parse(info);
@@ -223,17 +189,16 @@ public class UserController {
                 return ResultVO.error("无效的列名");
         }
 
-        // 执行更新操作
         boolean update = userService.update(updateWrapper);
         return update ? ResultVO.success() : ResultVO.error();
     }
+
+    @Operation(summary = "更新用户信息", description = "更新用户详细信息")
     @CrossOrigin("*")
     @PutMapping
     @Transactional
-
     public ResultVO update(@ModelAttribute UserRO userRO, RedirectAttributes redirectAttributes) {
         try {
-            System.out.println(userRO.toString());
             Integer userIdFromToken = TokenUtil.getUserIdFromToken(userRO.getToken());
             if (userIdFromToken == null) {
                 return ResultVO.failure("Invalid token");
@@ -245,8 +210,6 @@ public class UserController {
             }
 
             User byId = optionalUser.get();
-
-            // 解析和验证 birthdate
             Date birthdate = null;
             if (userRO.getBirthdate() != null) {
                 try {
@@ -257,12 +220,10 @@ public class UserController {
                 }
             }
 
-            // 复制属性到现有的 User 对象
             Optional.ofNullable(userRO.getBio()).ifPresent(byId::setBio);
             Optional.ofNullable(userRO.getGender()).ifPresent(byId::setGender);
             Optional.ofNullable(userRO.getNickName()).ifPresent(byId::setNickName);
 
-            // 处理背景图片文件
             Optional.ofNullable(userRO.getBackImgFile()).ifPresent(file -> {
                 if (byId.getBackImg() != null && !byId.getBackImg().startsWith(Static.DEFAULT_USER)) {
                     FileUtil.deleteFile(byId.getBackImg());
@@ -271,7 +232,6 @@ public class UserController {
                 byId.setBackImg(backImgPath);
             });
 
-            // 处理用户头像文件
             Optional.ofNullable(userRO.getUserImageFile()).ifPresent(file -> {
                 if (byId.getUserImage() != null && !byId.getUserImage().startsWith(Static.DEFAULT_USER)) {
                     FileUtil.deleteFile(byId.getUserImage());
@@ -280,7 +240,6 @@ public class UserController {
                 byId.setUserImage(userImagePath);
             });
 
-            // 更新用户出生日期
             byId.setBirthdate(birthdate);
             userService.updateById(byId);
 
@@ -297,30 +256,18 @@ public class UserController {
         return ResultVO.failure("File upload error: " + ex.getMessage());
     }
 
-    /**
-     * 获取用户的详细信息
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "获取用户详细信息", description = "根据token获取用户详细信息")
     @CrossOrigin(origins = "*")
     @GetMapping("/first")
-    public ResultVO getUserVOF(@RequestParam("token") String token) {
+    public ResultVO getUserVOF(@Parameter(description = "用户token") @RequestParam("token") String token) {
         try {
-
             Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
             User byId = userService.getById(userIdFromToken);
             UserVOF userVOF = new UserVOF();
-            Date registrationTime = byId.getRegistrationTime(); // 从数据库获取时间
-            // 获取当前时间
+            Date registrationTime = byId.getRegistrationTime();
             Instant now = Instant.now();
-
-            // 将Date转换为Instant
             Instant registrationInstant = registrationTime.toInstant();
-
-            // 计算两个时间之间的差值
             Duration duration = Duration.between(registrationInstant, now);
-
-            // 将Duration转换为天数
             int days = Math.toIntExact(duration.toDays());
             userVOF.setTime(days);
 
@@ -352,20 +299,13 @@ public class UserController {
         }
     }
 
-    /**
-     * 设置用户文本信息
-     * @param token 用户的身份令牌
-     * @param text1 文本1
-     * @param text2 文本2
-     * @param text3 文本3
-     * @return ResultVO
-     */
+    @Operation(summary = "设置用户文本信息", description = "设置用户的文本信息")
     @CrossOrigin(origins = "*")
     @PostMapping("/setTexts")
-    public ResultVO setTexts(@RequestParam("token") String token,
-                             @RequestParam("text1") String text1,
-                             @RequestParam("text2") String text2,
-                             @RequestParam("text3") String text3) {
+    public ResultVO setTexts(@Parameter(description = "用户token") @RequestParam("token") String token,
+                             @Parameter(description = "文本信息1") @RequestParam("text1") String text1,
+                             @Parameter(description = "文本信息2") @RequestParam("text2") String text2,
+                             @Parameter(description = "文本信息3") @RequestParam("text3") String text3) {
         QueryWrapper<Text> textQueryWrapper = new QueryWrapper<>();
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
         textQueryWrapper.eq("user_id", userIdFromToken);
@@ -385,14 +325,10 @@ public class UserController {
         return ResultVO.success();
     }
 
-    /**
-     * 获取用户信息
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "获取用户信息", description = "根据token获取用户信息")
     @CrossOrigin("*")
     @GetMapping
-    public ResultVO get(@RequestParam("token") String token) {
+    public ResultVO get(@Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
         if (userIdFromToken != null) {
             User byId = userService.getById(userIdFromToken);
@@ -421,16 +357,11 @@ public class UserController {
         }
     }
 
-    /**
-     * 获取用户点赞的帖子
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "获取用户点赞的帖子", description = "获取用户点赞过的帖子列表")
     @GetMapping("/likePost")
     @CrossOrigin("*")
-    public ResultVO getLike(@RequestParam("token") String token) {
+    public ResultVO getLike(@Parameter(description = "用户token") @RequestParam("token") String token) {
         try {
-
             Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
             QueryWrapper<Like> likeQueryWrapper = new QueryWrapper<>();
             likeQueryWrapper.eq("user_id", userIdFromToken)
@@ -449,21 +380,15 @@ public class UserController {
             }
 
             return ResultVO.success(postDTOList);
-
         } catch (Exception e) {
-            // 添加日志记录
             return ResultVO.failure("Error getting likes: " + e.getMessage());
         }
     }
 
-    /**
-     * 获取用户的帖子列表
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "获取用户的帖子列表", description = "获取用户发布的帖子列表")
     @GetMapping("/post")
     @CrossOrigin("*")
-    public ResultVO getMyPostList(@RequestParam("token") String token) {
+    public ResultVO getMyPostList(@Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
         if (userIdFromToken != null) {
             QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
@@ -475,14 +400,10 @@ public class UserController {
         }
     }
 
-    /**
-     * 获取给我点赞的用户
-     * @param token
-     * @return
-     */
+    @Operation(summary = "获取给我点赞的用户", description = "获取所有点赞我发布内容的用户列表")
     @GetMapping("/getLikeUser")
     @CrossOrigin
-    public ResultVO getLikeUser(@RequestParam("token") String token) {
+    public ResultVO getLikeUser(@Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
         return Optional.ofNullable(userIdFromToken)
                 .map(id -> {
@@ -490,31 +411,19 @@ public class UserController {
 
                     List<UserM> users = distinctUserIdsByPostLikes.stream()
                             .map(userService::getById)
-                            .map(this::convertToUserM)
+                            .filter(Objects::nonNull)  // 添加过滤步骤
+                            .map(this::convertToUserM)  // 调用转换方法
                             .collect(Collectors.toList());
 
                     return ResultVO.success(users);
                 })
                 .orElseGet(ResultVO::error);
     }
-    private UserM convertToUserM(User user) {
-        UserM userM = new UserM();
-        BeanUtils.copyProperties(user, userM);
 
-        Optional.ofNullable(userM.getUserImage())
-                .ifPresent(image -> userM.setUserImage(PathUtil.convertToHttpUrl(image)));
-
-        return userM;
-    }
-
-    /**
-     * 获取用户的评论列表
-     * @param token 用户的身份令牌
-     * @return ResultVO
-     */
+    @Operation(summary = "获取用户评论列表", description = "获取用户发布的评论列表")
     @GetMapping("/comment")
     @CrossOrigin("*")
-    public ResultVO getMyCommentList(@RequestParam("token") String token) {
+    public ResultVO getMyCommentList(@Parameter(description = "用户token") @RequestParam("token") String token) {
         Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
         if (userIdFromToken != null) {
             QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
@@ -526,16 +435,19 @@ public class UserController {
         }
     }
 
-    /**
-     * 用户注册
-     * @param username 用户名
-     * @param password 密码
-     * @return ResultVO
-     */
+    @Operation(summary = "用户注册", description = "新用户注册")
     @CrossOrigin(origins = "*")
     @PostMapping("/regist")
-    public ResultVO register(@RequestParam("userName") String username,
-                             @RequestParam("userPass") String password) {
+    public ResultVO register(@Parameter(description = "用户名") @RequestParam("userName") String username,
+                             @Parameter(description = "用户密码") @RequestParam("userPass") String password) {
         return userService.register(username, password);
     }
+    private UserM convertToUserM(User user) {
+        UserM userM = new UserM();
+        BeanUtils.copyProperties(user, userM);
+        Optional.ofNullable(userM.getUserImage())
+                .ifPresent(image -> userM.setUserImage(PathUtil.convertToHttpUrl(image)));
+        return userM;
+    }
+
 }

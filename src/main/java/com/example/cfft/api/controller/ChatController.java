@@ -3,6 +3,9 @@ package com.example.cfft.api.controller;
 import com.example.cfft.common.utils.Static;
 import com.example.cfft.common.vo.ResultVO;
 import com.nimbusds.jose.shaded.gson.Gson;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,17 +19,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
+@Tag(name = "聊天接口", description = "处理聊天相关操作")
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
     @Autowired
     private AudioController audioController;
 
+    @Operation(summary = "发送聊天消息", description = "发送消息并获取聊天响应")
     @PostMapping
     @CrossOrigin(origins = "*")
-    public ResultVO chat(@RequestParam("message") String message, @RequestParam(value = "use4", required = false, defaultValue = "false") boolean use4) {
+    public ResultVO chat(
+            @Parameter(description = "聊天消息", required = true) @RequestParam("message") String message,
+            @Parameter(description = "是否使用GPT-4模型", required = false) @RequestParam(value = "use4", required = false, defaultValue = "false") boolean use4) {
         try {
             System.out.println(message);
             String url = Static.CHAT_URL;
@@ -54,22 +60,26 @@ public class ChatController {
                         String generatedText = responseMap.get("generated_text").toString();
                         return ResultVO.success(generatedText);
                     } catch (Exception e) {
-                        return ResultVO.error("Error parsing response body: " + e.getMessage());
+                        return ResultVO.error("解析响应体时出错: " + e.getMessage());
                     }
                 } else {
-                    return ResultVO.error("Response body is not in JSON format");
+                    return ResultVO.error("响应体不是JSON格式");
                 }
             } else {
-                return ResultVO.error("Unexpected status code: " + statusCode);
+                return ResultVO.error("意外的状态码: " + statusCode);
             }
         } catch (Exception e) {
             return ResultVO.error("请检查网络连接: " + e.getMessage());
         }
     }
 
+    @Operation(summary = "通过文件发送聊天消息", description = "上传音频文件并获取聊天响应")
     @PostMapping("/file")
     @CrossOrigin(origins = "*")
-    public ResultVO chatByFile(@RequestParam("file") MultipartFile file, @RequestParam("token") String token, @RequestParam(value = "use4", required = false, defaultValue = "false") boolean use4) {
+    public ResultVO chatByFile(
+            @Parameter(description = "音频文件", required = true) @RequestParam("file") MultipartFile file,
+            @Parameter(description = "用户令牌", required = true) @RequestParam("token") String token,
+            @Parameter(description = "是否使用GPT-4模型", required = false) @RequestParam(value = "use4", required = false, defaultValue = "false") boolean use4) {
         Map<String, String> map = new HashMap<>();
 
         return Optional.ofNullable(file.getContentType())

@@ -8,6 +8,9 @@ import com.example.cfft.service.UserService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,17 +26,20 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/audio")
 @CrossOrigin("*")
+@Tag(name = "音频转换", description = "处理音频文件的上传和转换")
 public class AudioController {
 
     @Autowired
     private UserService userService;
 
+    @Operation(summary = "转换音频文件", description = "上传并转换音频文件")
     @PostMapping("/convert")
-    public ResultVO convertAudio(@RequestParam("file") MultipartFile file, @RequestParam("token") String token) {
+    public ResultVO convertAudio(
+            @Parameter(description = "上传的音频文件", required = true) @RequestParam("file") MultipartFile file,
+            @Parameter(description = "用户的令牌", required = true) @RequestParam("token") String token) {
         if (file.isEmpty()) {
             return ResultVO.error("文件为空");
         }
-
         return Optional.ofNullable(TokenUtil.getUserIdFromToken(token))
                 .flatMap(userId -> Optional.ofNullable(userService.getById(userId)))
                 .map(user -> {

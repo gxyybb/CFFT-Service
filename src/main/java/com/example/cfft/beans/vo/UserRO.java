@@ -1,75 +1,49 @@
 package com.example.cfft.beans.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
 @Data
+@Schema(description = "用户请求对象")
 public class UserRO {
-    /**
-     * 用户ID
-     */
-    @ApiModelProperty(value = "用户token")
+
+    @Schema(description = "用户令牌")
     private String token;
 
+    @Schema(description = "用户ID")
     private Integer userId;
 
-    /**
-     * 用户名
-     */
-    @ApiModelProperty(value = "用户名")
+    @Schema(description = "用户名")
     private String username;
 
-    /**
-     * 电子邮件
-     */
-    @ApiModelProperty(value = "电子邮件")
+    @Schema(description = "电子邮件")
     private String email;
 
-    /**
-     * 性别( 'Male', 'Female', 'Other' )
-     */
-    @ApiModelProperty(value = "性别")
+    @Schema(description = "性别（'Male', 'Female', 'Other'）")
     private String gender;
 
-    /**
-     * 出生日期
-     */
-    @ApiModelProperty(value = "出生日期")
+    @Schema(description = "出生日期")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private String birthdate;
 
-    /**
-     * 地址
-     */
-    @ApiModelProperty(value = "地址")
+    @Schema(description = "地址")
     private String address;
 
-    /**
-     * 个人简介
-     */
-    @ApiModelProperty(value = "个人简介")
+    @Schema(description = "个人简介")
     private String bio;
 
-    /**
-     * 用户等级
-     */
-    @ApiModelProperty(value = "用户等级")
+    @Schema(description = "用户等级")
     private Integer level;
 
-    @ApiModelProperty(value = "用户图片")
+    @Schema(description = "用户头像文件")
     private MultipartFile userImageFile;
 
-    @ApiModelProperty(value = "昵称")
+    @Schema(description = "用户昵称")
     private String nickName;
 
-    @ApiModelProperty(value = "背景图片")
+    @Schema(description = "背景图片文件")
     private MultipartFile backImgFile;
 
-    // Getters and Setters
-    // ...
 }
