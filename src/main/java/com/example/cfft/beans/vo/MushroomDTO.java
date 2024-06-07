@@ -1,64 +1,39 @@
 package com.example.cfft.beans.vo;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.example.cfft.beans.Location;
 import com.example.cfft.beans.MushroomImg;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@Schema(description = "蘑菇数据传输对象")
 public class MushroomDTO {
-    /**
-     * ID
-     */
-
-    @ApiModelProperty(value = "ID")
+    @Schema(description = "蘑菇ID")
     private Integer mushroomId;
 
-    /**
-     * 名称
-     */
-    @ApiModelProperty(value = "名称")
+    @Schema(description = "蘑菇名称")
     private String mushroomName;
 
-    /**
-     * 分类ID
-     */
-    @ApiModelProperty(value = "分类ID")
+    @Schema(description = "分类ID")
     private String category;
 
-    /**
-     * 图片URL
-     */
-    @ApiModelProperty(value = "图片URL")
+    @Schema(description = "蘑菇图片URL列表")
     private List<MushroomImg> mushroomImages;
 
-    /**
-     * 是否能食用(不可以0，可以1，其他3)
-     */
-    @ApiModelProperty(value = "是否能食用(不可以0，可以1，其他3)")
+    @Schema(description = "是否能食用（0：不可以，1：可以，3：其他）")
     private Integer isEat;
 
-    /**
-     * 分布地点
-     */
-    @ApiModelProperty(value = "分布地点")
+    @Schema(description = "分布地点")
     private String mushroomLocation;
 
-    /**
-     * 描述
-     */
-    @ApiModelProperty(value = "描述")
+    @Schema(description = "蘑菇描述")
     private String mushroomDesc;
 
-    /**
-     * 是否有毒(不含毒0，有毒1，未知2)
-     */
-    @ApiModelProperty(value = "是否有毒(不含毒0，有毒1，未知2)")
+    @Schema(description = "是否有毒（0：不含毒，1：有毒，2：未知）")
     private Integer isPoison;
 
+    @Schema(description = "分布地点列表")
     private List<Location> locations;
-
 }

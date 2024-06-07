@@ -2,71 +2,52 @@ package com.example.cfft.beans.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
+
 @Data
+@Schema(description = "视频数据传输对象")
 public class VideoDTO {
+    @Schema(description = "视频ID")
     @TableId(type = IdType.AUTO)
     private Integer videoid;
 
-    /**
-     * 标题
-     */
+    @Schema(description = "标题")
     private String title;
 
-    /**
-     * 描述
-     */
+    @Schema(description = "描述")
     private String description;
 
-    /**
-     * 文件名
-     */
+    @Schema(description = "文件名")
     private String filename;
 
-    /**
-     * 文件路径
-     */
+    @Schema(description = "文件路径")
     private String filepath;
 
-    /**
-     * 文件类型
-     */
+    @Schema(description = "文件类型")
     private String filetype;
 
-    /**
-     * 上传时间
-     */
+    @Schema(description = "上传时间")
     private Date uploadtime;
 
-    /**
-     * 时长
-     */
+    @Schema(description = "时长")
     private Integer duration;
 
-    /**
-     * 封面图片
-     */
+    @Schema(description = "封面图片URL")
     private String coverimage;
 
-    /**
-     * 观看次数
-     */
+    @Schema(description = "观看次数")
     private Integer views;
 
-    /**
-     * 点赞数
-     */
+    @Schema(description = "点赞数")
     private Integer likes;
 
-    /**
-     * 评论数
-     */
+    @Schema(description = "评论数")
     private Integer comments;
 
+    @Schema(description = "评论列表")
     private List<CommentVO> commentVOS;
-
-
 }

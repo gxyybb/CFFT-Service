@@ -13,6 +13,9 @@ import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.service.CarouselService;
 import com.example.cfft.service.PostImgService;
 import com.example.cfft.service.PostService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
  * @since 2024-03-28
  */
 @RestController
+@Tag(name = "轮播图管理", description = "处理轮播图相关操作")
 @RequestMapping("/carousel")
 public class CarouselController {
     private final CarouselService carouselService;
@@ -47,9 +51,14 @@ public class CarouselController {
         this.postImgService = postImgService;
     }
 
+    @Operation(summary = "添加轮播图", description = "上传图片并添加轮播图信息")
     @CrossOrigin(origins = "*")
     @PostMapping
-    public ResultVO save(@RequestParam("image")MultipartFile image,@RequestParam("title") String title,@RequestParam("desc") String desc,@RequestParam("url") String url){
+    public ResultVO save(
+            @Parameter(description = "上传的图片文件", required = true) @RequestParam("image") MultipartFile image,
+            @Parameter(description = "轮播图标题", required = true) @RequestParam("title") String title,
+            @Parameter(description = "轮播图描述", required = true) @RequestParam("desc") String desc,
+            @Parameter(description = "轮播图链接", required = true) @RequestParam("url") String url) {
         Carousel carousel = new Carousel();
         Optional<MultipartFile> image1 = Optional.ofNullable(image);
         image1.ifPresent(img->{
@@ -67,9 +76,12 @@ public class CarouselController {
         boolean save = carouselService.save(carousel);
         return save?ResultVO.success():ResultVO.error();
     }
+    @Operation(summary = "通过帖子设置轮播图", description = "根据帖子ID和图片ID设置轮播图")
     @CrossOrigin(origins = "*")
     @PostMapping("setPost")
-    public ResultVO saveByPost(@RequestParam("postId") Integer postId, @RequestParam("postImg") Integer postImg) {
+    public ResultVO saveByPost(
+            @Parameter(description = "帖子ID", required = true) @RequestParam("postId") Integer postId,
+            @Parameter(description = "图片ID", required = true) @RequestParam("postImg") Integer postImg) {
         Carousel carousel = new Carousel();
 
         // 检查 postId 是否存在
@@ -97,6 +109,7 @@ public class CarouselController {
         return save ? ResultVO.success() : ResultVO.error();
     }
 
+    @Operation(summary = "获取所有轮播图", description = "获取所有显示的轮播图信息")
     @CrossOrigin(origins = "*")
     @GetMapping("all")
     public ResultVO list() {
@@ -122,9 +135,11 @@ public class CarouselController {
         return ResultVO.success(carouselVO);
     }
 
+    @Operation(summary = "获取单个轮播图", description = "根据轮播图ID获取详细信息")
     @CrossOrigin(origins = "*")
     @GetMapping
-    public ResultVO getOne(@RequestParam("carouselId") Integer carouseId){
+    public ResultVO getOne(
+            @Parameter(description = "轮播图ID", required = true) @RequestParam("carouselId") Integer carouseId) {
         Optional<Carousel> optionalCarousel = Optional.ofNullable(carouselService.getById(carouseId));
         if (optionalCarousel.isEmpty()) {
             return ResultVO.error();
@@ -140,9 +155,11 @@ public class CarouselController {
                     return ResultVO.successYY(carousel);
                 });
     }
+    @Operation(summary = "删除轮播图", description = "根据轮播图ID删除轮播图")
     @CrossOrigin(origins = "*")
     @DeleteMapping
-    public ResultVO delete(@RequestParam("carouselId") Integer carouselId) {
+    public ResultVO delete(
+            @Parameter(description = "轮播图ID", required = true) @RequestParam("carouselId") Integer carouselId) {
         AtomicBoolean success = new AtomicBoolean(false);
 
         Optional.ofNullable(carouselId).ifPresent(id -> {

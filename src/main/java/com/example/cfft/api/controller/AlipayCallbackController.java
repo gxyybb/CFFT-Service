@@ -3,6 +3,9 @@ package com.example.cfft.api.controller;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.example.cfft.api.config.AlipayConfig;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +16,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@Tag(name = "支付宝回调", description = "处理支付宝回调请求")
 public class AlipayCallbackController {
 
     @Autowired
     private AlipayConfig alipayConfig;
 
+    @Operation(summary = "处理支付宝回调请求", description = "验证支付宝签名并处理回调请求")
     @GetMapping("/alipay/callback")
     public String callback(HttpServletRequest request,
-                           @RequestParam Map<String, String> params) {
+                           @Parameter(description = "支付宝返回的参数") @RequestParam Map<String, String> params) {
         // 获取支付宝返回的参数
         Map<String, String> parameterMap = new HashMap<>();
         for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
@@ -49,5 +54,4 @@ public class AlipayCallbackController {
             return "fail";
         }
     }
-
 }

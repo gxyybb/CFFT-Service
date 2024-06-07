@@ -9,6 +9,7 @@ spring:
     open-in-view: false
 
 
+
   main:
     allow-bean-definition-overriding: true
   datasource:
@@ -28,3 +29,9 @@ mybatis-plus:
     db-config:
       id-type: auto
   type-aliases-package: beans
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+

@@ -5,7 +5,9 @@ import com.example.cfft.beans.vo.UserRO;
 import com.example.cfft.common.utils.*;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.service.UserService;
-import io.swagger.models.auth.In;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -14,22 +16,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Tag(name = "管理员操作", description = "包含所有管理员相关的用户操作")
 @RestController
 @RequestMapping("/root")
 public class RootController {
     @Autowired
-    public UserService userService;
+    private UserService userService;
+
     @Autowired
-    public UserController userController;
+    private UserController userController;
 
-
-
-    @CrossOrigin("*")
+    @Operation(summary = "获取所有用户")
+    @CrossOrigin(origins = "*")
     @GetMapping("all")
-    public ResultVO getAllUser(@RequestParam("token")String token) {
+    public ResultVO getAllUser(@Parameter(description = "管理员Token", required = true) @RequestParam("token") String token) {
         List<User> list = userService.list();
         List<User> updatedList = list.stream().map(user -> {
-            // Convert image paths to HTTP URLs
             user.setUserImage(PathUtil.convertToHttpUrl(user.getUserImage()));
             user.setBackImg(PathUtil.convertToHttpUrl(user.getBackImg()));
             return user;
@@ -37,16 +39,19 @@ public class RootController {
         return ResultVO.success(updatedList);
     }
 
-    @CrossOrigin("*")
+    @Operation(summary = "创建用户")
+    @CrossOrigin(origins = "*")
     @PostMapping("createUser")
-    public ResultVO createUser(@RequestParam("userName") String username,@RequestParam("password")String password){
-        return userController.register(username,password);
+    public ResultVO createUser(@Parameter(description = "用户名", required = true) @RequestParam("userName") String username,
+                               @Parameter(description = "密码", required = true) @RequestParam("password") String password) {
+        return userController.register(username, password);
     }
-    @CrossOrigin("*")
+
+    @Operation(summary = "更新用户信息")
+    @CrossOrigin(origins = "*")
     @PutMapping("user")
     public ResultVO updateUser(@ModelAttribute UserRO userRO, RedirectAttributes redirectAttributes) {
         try {
-            // 获取用户ID并生成Token
             Optional<Integer> userId = Optional.ofNullable(userRO.getUserId());
             if (userId.isEmpty()) {
                 return ResultVO.failure("User ID is required");
@@ -55,32 +60,32 @@ public class RootController {
             String token = TokenUtil.generateToken(String.valueOf(userId.get()));
             userRO.setToken(token);
 
-            // 调用 update 方法更新用户信息
             ResultVO result = userController.update(userRO, redirectAttributes);
-
-            // 返回 update 方法的结果
             return result;
         } catch (Exception e) {
             e.printStackTrace();
             return ResultVO.failure("Update failed: " + e.getMessage());
         }
     }
-    @CrossOrigin("*")
+
+    @Operation(summary = "重置用户密码")
+    @CrossOrigin(origins = "*")
     @PutMapping("/reset")
-    public ResultVO resetPassword(@RequestParam("userId")Integer userId){
+    public ResultVO resetPassword(@Parameter(description = "用户ID", required = true) @RequestParam("userId") Integer userId) {
         User user = new User();
+        user.setUserId(userId);
         user.setPassword(MD5Utils.string2MD5(Static.DEFAULT_PASSWORD));
         userService.updateById(user);
         return ResultVO.success();
     }
+
+    @Operation(summary = "删除用户")
+    @CrossOrigin(origins = "*")
     @DeleteMapping
-    @CrossOrigin("*")
-    public ResultVO delete(@RequestParam("userId") Integer userId) {
-        // 获取用户信息
+    public ResultVO delete(@Parameter(description = "用户ID", required = true) @RequestParam("userId") Integer userId) {
         User user = userService.getById(userId);
         Optional<User> optionalUser = Optional.ofNullable(user);
 
-        // 如果用户存在，则删除头像文件
         optionalUser.ifPresent(u -> {
             String avatar = u.getAvatar();
             if (avatar != null && !avatar.isEmpty()) {
@@ -88,7 +93,6 @@ public class RootController {
             }
         });
 
-        // 删除用户记录
         boolean removed = userService.removeById(userId);
         if (removed) {
             return ResultVO.success();
@@ -96,6 +100,4 @@ public class RootController {
             return ResultVO.failure("Failed to delete user");
         }
     }
-
-
 }
