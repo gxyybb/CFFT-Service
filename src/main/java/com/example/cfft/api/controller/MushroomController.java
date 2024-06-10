@@ -19,10 +19,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -83,8 +81,8 @@ public class MushroomController {
     public ResultVO getMushroomInAndroid(
             @Parameter(description = "是否可食用", required = true) @RequestParam("isEat") Integer isEat,
             @Parameter(description = "是否有毒", required = true) @RequestParam("isPosion") Integer isPosion,
-            @Parameter(description = "页码", required = false) @RequestParam(value = "page") Integer page,
-            @Parameter(description = "每页大小", required = false) @RequestParam(value = "size") Integer size) {
+            @Parameter(description = "页码", required = false) @RequestParam(value = "page",  required = false,defaultValue = "1") Integer page,
+            @Parameter(description = "每页大小", required = false) @RequestParam(value = "size" , required = false,defaultValue = "10") Integer size) {
         QueryWrapper<Mushroom> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("is_eat", isEat)
                 .eq("is_poison", isPosion);
@@ -304,32 +302,60 @@ public class MushroomController {
     private MushroomDTO getMushroomDTO(Mushroom mushroom) {
         MushroomDTO mushroomDTO = new MushroomDTO();
         BeanUtils.copyProperties(mushroom, mushroomDTO);
-        QueryWrapper<MushroomImg> query = new QueryWrapper<>();
-        query.eq("mushroom_id", mushroom.getMushroomId());
-        List<MushroomImg> list = imgService.list(query);
-        if (list != null && !list.isEmpty()) {
-            for (MushroomImg m : list) {
-                m.setImgUrl(PathUtil.convertToHttpUrl(m.getImgUrl()));
+
+        // 查询蘑菇分布的地点
+        QueryWrapper<LocationMushroom> locationMushroomQueryWrapper = new QueryWrapper<>();
+        locationMushroomQueryWrapper.eq("mushroom_id", mushroom.getMushroomId());
+
+        StringBuilder locationBuilder = new StringBuilder();
+        locationMushroomService.list(locationMushroomQueryWrapper).stream().distinct().map(
+                locationMushroom -> locationService.getById(locationMushroom.getLocationId()).getProvince()
+        ).forEach(s -> {
+            if (locationBuilder.length() > 0) {
+                locationBuilder.append("，");
             }
+            locationBuilder.append(s);
+        });
+
+        if (locationBuilder.length() > 0) {
+            locationBuilder.append("。");
+        }
+        mushroomDTO.setMushroomLocation(locationBuilder.toString());
+
+        // 查询蘑菇图片
+        QueryWrapper<MushroomImg> imgQuery = new QueryWrapper<>();
+        imgQuery.eq("mushroom_id", mushroom.getMushroomId());
+        List<MushroomImg> imgList = imgService.list(imgQuery);
+        if (imgList != null && !imgList.isEmpty()) {
+            imgList.forEach(img -> img.setImgUrl(PathUtil.convertToHttpUrl(img.getImgUrl())));
         } else {
-            list = new ArrayList<>();
             MushroomImg img = new MushroomImg();
             img.setImgUrl(PathUtil.convertToHttpUrl(Static.DefaultImage));
-            list.add(img);
+            imgList = Collections.singletonList(img);
         }
-        QueryWrapper<LocationMushroom> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("mushroom_id", mushroom.getMushroomId());
-        List<LocationMushroom> list1 = locationMushroomService.list(queryWrapper);
-        List<Location> collect = list1.stream()
+        mushroomDTO.setMushroomImages(imgList);
+
+        // 查询蘑菇分布位置
+        List<LocationMushroom> locationMushrooms = locationMushroomService.list(locationMushroomQueryWrapper);
+        List<Location> locations = locationMushrooms.stream()
                 .map(locationMushroom -> locationService.getById(locationMushroom.getLocationId()))
-                .toList();
-        mushroomDTO.setLocations(collect);
-        mushroomDTO.setMushroomImages(list);
-        Category byId = categoryService.getById(mushroom.getCategoryId());
-        String categorysByCategoryId = categoryMapper.getCategorysByCategoryId(byId.getCategoryId());
-        mushroomDTO.setCategory(categorysByCategoryId);
+                .collect(Collectors.toList());
+        mushroomDTO.setLocations(locations);
+
+        // 查询蘑菇分类路径
+        try {
+            Category category = categoryService.getById(mushroom.getCategoryId());
+            String categoryPath = categoryMapper.getCategorysByCategoryId(category.getCategoryId());
+            mushroomDTO.setCategory(categoryPath);
+        } catch (Exception e) {
+            // 处理异常情况，如递归查询超出限制等
+            mushroomDTO.setCategory("分类路径获取失败");
+            // 记录日志或其他处理
+        }
+
         return mushroomDTO;
     }
+
 
     private List<MushroomDTO> getMushroomDTO(List<Mushroom> list) {
         List<MushroomDTO> list1 = new ArrayList<>();

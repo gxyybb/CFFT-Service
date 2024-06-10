@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public class CommentController {
             comment.setUserId(userIdFromToken);
             comment.setTypeId(typeId);
             comment.setParentCommentId(null);
-            Optional.ofNullable(type).ifPresent(t -> comment.setType(t));
+            Optional.ofNullable(type).ifPresent(comment::setType);
             commentService.save(comment);
             return getResultVOByType(typeId, type);
         }).orElseGet(ResultVO::failure);
@@ -73,7 +74,7 @@ public class CommentController {
         comment.setUserId(userIdFromToken);
         comment.setTypeId(typeId);
         comment.setParentCommentId(commentId);
-        Optional.ofNullable(type).ifPresent(t -> comment.setType(t));
+        Optional.ofNullable(type).ifPresent(comment::setType);
         boolean save = commentService.save(comment);
 
         if (save) {
@@ -139,12 +140,27 @@ public class CommentController {
             @Parameter(description = "评论ID", required = true) @PathVariable Integer commentId,
             @Parameter(description = "类型", required = false) @RequestParam(value = "type", required = false) String type) {
 
-        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
         type = (type == null || type.isEmpty()) ? "post" : type;
-        queryWrapper.eq("type", type).eq("parent_comment_id", commentId);
 
-        List<Comment> comments = commentService.list(queryWrapper);
+        List<Comment> comments = getAllReplies(commentId, type);
         return ResultVO.success(generateToComment(comments));
+    }
+
+    public List<Comment> getAllReplies(Integer commentId, String type) {
+        List<Comment> comments = new ArrayList<>();
+        getAllRepliesRecursive(commentId, type, comments);
+        return comments;
+    }
+
+    private void getAllRepliesRecursive(Integer commentId, String type, List<Comment> comments) {
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("type", type).eq("parent_comment_id", commentId);
+        List<Comment> directReplies = commentService.list(queryWrapper);
+
+        for (Comment comment : directReplies) {
+            comments.add(comment);
+            getAllRepliesRecursive(comment.getCommentId(), type, comments);
+        }
     }
 
     @Operation(summary = "删除评论", description = "根据评论ID和token删除评论")
@@ -169,6 +185,14 @@ public class CommentController {
                 .map(comment -> {
                     CommentVO commentVO = new CommentVO();
                     BeanUtils.copyProperties(comment, commentVO);
+                    Integer parentCommentId = comment.getParentCommentId();
+                    Optional.ofNullable(parentCommentId).ifPresent(
+                            id->{
+                                Comment byId = commentService.getById(id);
+                                commentVO.setTargetName(userService.getById(byId.getUserId()).getUsername());
+                            }
+                    );
+
 
                     Optional.ofNullable(userService.getById(comment.getUserId())).ifPresent(user -> {
                         commentVO.setUserImage(PathUtil.convertToHttpUrl(user.getUserImage()));

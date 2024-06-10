@@ -24,7 +24,7 @@ public class AdminInterceptor implements HandlerInterceptor {
                 .collect(Collectors.toMap(h -> h, request::getHeader)));
 
         // 如果请求方法是 OPTIONS，直接返回 true
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())||request.getRequestURI().startsWith("/location") && request.getMethod().equalsIgnoreCase("GET")) {
             return true;
         }
 
