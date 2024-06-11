@@ -98,8 +98,11 @@ public class PostController {
     public ResultVO getPostList(@Parameter(description = "查询条件") @RequestParam(required = false) QueryWrapper<Post> queryWrapper) {
         List<Post> list;
         if (queryWrapper == null) {
-            list = postService.list();
+            queryWrapper = new QueryWrapper<>();
+            queryWrapper.orderByDesc("publish_time");
+            list = postService.list(queryWrapper);
         } else {
+            queryWrapper.orderByDesc("publish_time");
             list = postService.list(queryWrapper);
         }
         return generatePostDTO(list);
@@ -115,6 +118,19 @@ public class PostController {
         PostDTO postDTO = postService.convertToDTO(post);
 
         return ResultVO.success(postDTO);
+    }
+    @Operation(summary = "查询是否点赞")
+    @CrossOrigin(origins = "*")
+    @GetMapping("/likeOrNo")
+    public ResultVO likeOrNo(@Parameter(description = "帖子ID", required = true) @RequestParam("postId") Integer postId,@Parameter(description = "用户token", required = true)String token){
+        Integer userIdFromToken = TokenUtil.getUserIdFromToken(token);
+        QueryWrapper<Like> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("object_id",postId);
+        queryWrapper.eq("object_type","Post");
+        queryWrapper.eq("user_id",userIdFromToken);
+        boolean exists = likeService.exists(queryWrapper);
+
+        return exists?ResultVO.success("1"):ResultVO.success("0");
     }
 
     @Operation(summary = "批量保存帖子")
@@ -143,7 +159,7 @@ public class PostController {
     @GetMapping("/search")
     public ResultVO searchPost(@Parameter(description = "关键字", required = true) @RequestParam("keyword") String keyword) {
         QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("title", "%" + keyword + "%");
+        queryWrapper.like("title", "%" + keyword + "%").orderByDesc("publish_time");
         List<Post> list = postService.list(queryWrapper);
 
         return generatePostDTO(list);

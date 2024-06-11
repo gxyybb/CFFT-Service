@@ -62,7 +62,7 @@ public class AudioController {
 
                             // 构建Http请求
                             HttpRequest request = HttpRequest.newBuilder()
-                                    .uri(new URI("http://localhost:5001/convert"))
+                                    .uri(new URI("http://localhost:5000/convert"))
                                     .header("Content-Type", "application/json")
                                     .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
                                     .build();

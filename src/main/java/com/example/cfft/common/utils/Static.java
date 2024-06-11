@@ -3,6 +3,7 @@ package com.example.cfft.common.utils;
 public class Static{
     public static final String LinuxPath = "/root/cfft/";
     public static final String WindowsPath= "C:\\CFFT";
+    public static final String AUDIO_TEMPORARY_URL = LinuxPath+"TEMPORARY/";
     public static final String BASE_URL_FOR_WEB =  "http://101.200.79.152:8081/";
     public static final String DEFAULT_COVER_IMAGE_PATH = LinuxPath+"default/video.jpg";
     public static final String VIDEO = LinuxPath+"video/";

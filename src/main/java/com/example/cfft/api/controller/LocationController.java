@@ -1,8 +1,12 @@
 package com.example.cfft.api.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.cfft.beans.Location;
+import com.example.cfft.beans.LocationMushroom;
 import com.example.cfft.common.vo.ResultVO;
+import com.example.cfft.service.LocationMushroomService;
 import com.example.cfft.service.LocationService;
+import com.example.cfft.service.MushroomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @RestController
@@ -19,6 +24,10 @@ import java.util.stream.Collectors;
 public class LocationController {
     @Autowired
     private LocationService locationService;
+    @Autowired
+    private LocationMushroomService locationMushroomService;
+    @Autowired
+    private MushroomService mushroomService;
     @Operation(summary = "保存位置", description = "保存新的位置信息")
     @PostMapping
     @CrossOrigin("*")
@@ -59,7 +68,24 @@ public class LocationController {
     @GetMapping
     @CrossOrigin("*")
     public ResultVO getList(){
-        return ResultVO.success(locationService.list());
+        List<Location> collect = locationService.list().stream().distinct().peek(location -> {
+            Integer id = location.getId();
+            QueryWrapper<LocationMushroom> locationMushroomQueryWrapper = new QueryWrapper<>();
+            locationMushroomQueryWrapper.eq("location_id", id);
+            AtomicReference<String> mushrooms = new AtomicReference<>(location.getProvince() + "主要分布的菌菇有：");
+            locationMushroomService.list(locationMushroomQueryWrapper).stream().map(locationMushroom ->
+                    mushroomService.getById(locationMushroom.getMushroomId()).getMushroomName()
+            ).forEach(s -> mushrooms.set(mushrooms.get() + s + "，"));
+
+            String description = mushrooms.get();
+            if (description.endsWith("，")) {
+                description = description.substring(0, description.length() - 1) + "。";
+            }
+            location.setDescription(description);
+        }).toList();
+
+
+        return ResultVO.success(collect);
     }
     @Operation(summary = "更新位置", description = "更新现有的位置信息")
     @PutMapping
