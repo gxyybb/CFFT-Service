@@ -1,5 +1,9 @@
 
 spring:
+  redis:
+    # 如果你的 Redis 需要密码，则取消下面的注释并填写密码
+    # password: yourpassword
+
   servlet:
     multipart:
       max-file-size: 200MB
@@ -21,6 +25,16 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  data:
+    redis:
+      timeout: 60000ms
+      host: localhost
+      port: 6379
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
 
 mybatis-plus:

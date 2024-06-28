@@ -11,6 +11,7 @@ import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.mapper.CategoryMapper;
 import com.example.cfft.service.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -43,7 +45,9 @@ public class MushroomController {
     private LocationMushroomService locationMushroomService;
     @Autowired
     private LocationService locationService;
-
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
+    private static final String ALL_MUSHROOMS_KEY = "allMushrooms";
     @Operation(summary = "（安卓）根据关键字查询蘑菇列表", description = "根据关键字、可食用性和毒性查询蘑菇列表")
     @CrossOrigin
     @GetMapping("/searchMushroomInLibrary")
@@ -229,8 +233,16 @@ public class MushroomController {
     @CrossOrigin(origins = "*")
     @GetMapping
     public ResultVO listAllMushrooms() {
+        List<MushroomVO> mushroomVOList;
+        // 尝试从缓存中获取数据
+        mushroomVOList = (List<MushroomVO>) redisTemplate.opsForValue().get(ALL_MUSHROOMS_KEY);
+        if (mushroomVOList != null) {
+            return ResultVO.success(mushroomVOList);
+        }
+
+        // 缓存中没有数据，从数据库中获取
         List<Mushroom> list = mushroomService.list();
-        List<MushroomVO> mushroomVOList = list.stream()
+        mushroomVOList = list.stream()
                 .distinct()
                 .map(mushroom -> {
                     Integer categoryId = mushroom.getCategoryId();
@@ -240,6 +252,10 @@ public class MushroomController {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        // 将数据缓存到Redis中
+        redisTemplate.opsForValue().set(ALL_MUSHROOMS_KEY, mushroomVOList, 20, TimeUnit.MINUTES);
+
         return ResultVO.success(mushroomVOList);
     }
 

@@ -46,46 +46,51 @@ public class AudioController {
                     String uploadDir = user.getAvatar() + "audio/";
 
                     // 保存上传的文件
-                    String originalFilePath = uploadDir;
-                    String savedFilePath = FileUtil.saveFile(originalFilePath, file);
+                    String savedFilePath = FileUtil.saveFile(uploadDir, file);
+                    if (savedFilePath == null) {
+                        return ResultVO.error("文件保存失败");
+                    }
 
                     // 调用FFmpeg进行转换
                     String outputFilePath = FileUtil.extractAudio(savedFilePath);
-                    return Optional.ofNullable(outputFilePath).map(path -> {
-                        try {
-                            Map<String, String> requestBody = new HashMap<>();
-                            requestBody.put("file_path", path);
+                    if (outputFilePath == null) {
+                        return ResultVO.error("wav文件生成失败");
+                    }
 
-                            // 将请求体转换为JSON
-                            ObjectMapper objectMapper = new ObjectMapper();
-                            String requestBodyJson = objectMapper.writeValueAsString(requestBody);
+                    try {
+                        Map<String, String> requestBody = new HashMap<>();
+                        requestBody.put("file_path", outputFilePath);
 
-                            // 构建Http请求
-                            HttpRequest request = HttpRequest.newBuilder()
-                                    .uri(new URI("http://localhost:5000/convert"))
-                                    .header("Content-Type", "application/json")
-                                    .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
-                                    .build();
+                        // 将请求体转换为JSON
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        String requestBodyJson = objectMapper.writeValueAsString(requestBody);
 
-                            // 创建HttpClient并发送请求
-                            HttpClient client = HttpClient.newHttpClient();
-                            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                        // 构建Http请求
+                        HttpRequest request = HttpRequest.newBuilder()
+                                .uri(new URI("http://localhost:5000/convert"))
+                                .header("Content-Type", "application/json")
+                                .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
+                                .build();
 
-                            // 解析响应并返回result字段内容
-                            JsonNode responseJson = objectMapper.readTree(response.body());
-                            JsonNode resultNode = responseJson.path("result");
+                        // 创建HttpClient并发送请求
+                        HttpClient client = HttpClient.newHttpClient();
+                        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                            // 返回结果
-                            if (resultNode.isMissingNode()) {
-                                return ResultVO.error("result字段不存在");
-                            } else {
-                                return ResultVO.success(resultNode.toString());
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return ResultVO.error("调用Flask服务失败");
+                        // 解析响应并返回result字段内容
+                        JsonNode responseJson = objectMapper.readTree(response.body());
+                        JsonNode resultNode = responseJson.path("result");
+
+                        // 返回结果
+                        if (resultNode.isMissingNode()) {
+                            return ResultVO.error("result字段不存在");
+                        } else {
+                            return ResultVO.success(resultNode.toString());
                         }
-                    }).orElse(ResultVO.error("wav文件生成失败"));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return ResultVO.error("调用Flask服务失败");
+                    }
                 }).orElse(ResultVO.error());
     }
+
 }
