@@ -1,5 +1,6 @@
 
 spring:
+
   redis:
     # 如果你的 Redis 需要密码，则取消下面的注释并填写密码
     # password: yourpassword
@@ -11,7 +12,11 @@ spring:
       max-request-size: 200MB
   jpa:
     open-in-view: false
-
+  rabbitmq:
+    port: 5672
+    host: localhost
+    username: guest
+    password: guest
 
 
   main:

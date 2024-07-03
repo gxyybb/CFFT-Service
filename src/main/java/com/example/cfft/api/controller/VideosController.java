@@ -1,6 +1,7 @@
 package com.example.cfft.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.cfft.api.config.RabbitMQConfig;
 import com.example.cfft.beans.Comment;
 import com.example.cfft.beans.Video;
 import com.example.cfft.beans.vo.CommentVO;
@@ -13,9 +14,13 @@ import com.example.cfft.common.utils.TokenUtil;
 import com.example.cfft.common.vo.ResultVO;
 import com.example.cfft.service.CommentService;
 import com.example.cfft.service.VideoService;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +44,8 @@ public class VideosController {
 
     @Autowired
     private CommentService commentService;
-
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     /**
      * 获取视频列表
      * @return 视频列表
@@ -105,43 +111,21 @@ public class VideosController {
         String filePath = FileUtil.saveFile(baseDirectory + uniqueFolderName, video);
 
         if (filePath != null) {
-            try {
-                String coverImage = FileUtil.extractFrame(filePath);
-                updateVideoInfo(title, description, filePath, video, coverImage);
-                return ResultVO.success();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return ResultVO.error("视频处理失败");
-            }
+            // 创建消息
+            String originalFileName = video.getOriginalFilename();
+            String message = title + "|" + description + "|" + filePath + "|" + originalFileName;
+
+            // 发送消息到 RabbitMQ
+            rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, message);
+
+            return ResultVO.success("视频上传成功，正在后台处理");
         } else {
             return ResultVO.error("请检查网络连接");
         }
     }
 
-    /**
-     * 更新视频信息
-     * @param title 视频标题
-     * @param description 视频描述
-     * @param filePath 视频路径
-     * @param video 视频文件
-     * @param coverImage 封面图路径
-     */
-    private void updateVideoInfo(String title, String description, String filePath, MultipartFile video, String coverImage) {
-        Video videos = new Video();
-        videos.setTitle(title);
-        videos.setDescription(description);
-        videos.setFilename(title);
-        videos.setFilepath(filePath);
-        String originalFileName = video.getOriginalFilename();
-        videos.setFiletype(originalFileName);
-        videos.setUploadtime(new Date());
-        videos.setDuration(null); // 这里设置为 null，可能需要改成视频的实际时长
-        videos.setCoverimage(coverImage);
-        videos.setViews(0);
-        videos.setLikes(0);
-        videos.setComments(0);
-        videoService.save(videos);
-    }
+
+
 
     /**
      * 删除视频
